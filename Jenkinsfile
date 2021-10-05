@@ -7,6 +7,7 @@ pipeline {
     agent any
     stages {
 
+
         stage('Start Container for Testing') {
             steps {
                 script {
@@ -27,7 +28,7 @@ pipeline {
                         sh 'docker-compose down'
                     }
                 }
-                failure{
+                failure {
                     script {
                         sh 'docker-compose down'
                     }
