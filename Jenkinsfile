@@ -1,57 +1,58 @@
 pipeline {
-  environment {
-    imageName = "scottyfullstack/falcon-demo-app:${env.BUILD_ID}"
-    customImage = ''
-  }
-
-  agent any
-  stages {
-
-    stage('Start Container for Testing') {
-      steps {
-        sh 'docker-compose rm -f;  docker-compose up -d images'
-      }
+    environment {
+        imageName = "scottyfullstack/falcon-demo-app:${env.BUILD_ID}"
+        customImage = ''
     }
+    agent any
+    stages {
 
-    stage('Run Test') {
-      steps {
-        script {
-          sh 'pip3 install -r requirements.txt; python3 -m pytest tests'
+        stage('Start the container for testing') {
+            steps {
+                script {
+                    sh 'docker-compose rm -f; docker-compose up -d images'
+                }
+            }
         }
-      }
-      post {
-          success {
-              script {
-                  sh 'docker-compose down'
-              }
-          }
-          failure {
-              script {
-                  sh 'docker-compose down'
-              }
-          }
-      }
-    }
 
-    stage('Build Image') {
-      steps {
-        script {
-          customImage = docker.build(imageName)
+        stage('Run Tests') {
+            steps {
+                script {
+                    sh 'pip3 install -r requirements.txt; python3 -m pytest tests'
+                }
+            }
+            post {
+                success {
+                    script {
+                        sh 'docker-compose down'
+                    }
+                }
+                failure {
+                    script {
+                        sh 'docker-compose down'
+                    }
+                }
+            }
         }
-      }
-    }
 
-    stage('Push to Registry') {
-        when {
-            branch "main"
+        stage('Build Image') {
+            steps {
+                script {
+                    customImage = docker.build(imageName)
+                }
+            }
         }
-        steps {
-            script {
-                docker.withRegistry('', 'DockerHub') {
-                    customImage.push()
+
+        stage('Push to Registry') {
+            when {
+                branch "main"
+            }
+            steps {
+                script {
+                    docker.withRegistry('', 'DockerHub') {
+                        customImage.push()
+                    }
                 }
             }
         }
     }
-  }
 }
